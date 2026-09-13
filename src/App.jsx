@@ -1,17 +1,25 @@
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import { configureAccessTokenProvider } from "./api/client";
 import AppShell from "./components/AppShell";
 import LoginScreen from "./components/LoginScreen";
 import { ErrorState, LoadingState } from "./components/PageState";
 import TaskDialog from "./components/TaskDialog";
 import Toast from "./components/Toast";
-import { auth, googleProvider } from "./config/firebase";
+import { auth, googleProvider, signInWithPopup, signOut } from "./config/firebase";
 import { useTaskManager } from "./hooks/useTaskManager";
 import AllTasksPage from "./pages/AllTasksPage";
 import FocusPage from "./pages/FocusPage";
 import MatrixPage from "./pages/MatrixPage";
+
+function loginMessage(error) {
+  const code = error?.code || "";
+  if (code === "auth/popup-closed-by-user") return "Sign-in was closed before it finished. Try again when you are ready.";
+  if (code === "auth/popup-blocked") return "Your browser blocked the sign-in window. Allow pop-ups for Mira and try again.";
+  if (code === "auth/network-request-failed") return "Could not reach Google authentication. Check your connection and try again.";
+  return "Could not sign you in right now. Please try again.";
+}
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -38,9 +46,7 @@ export default function App() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        setAuthError(err.message || "Sign-in failed. Please try again.");
-      }
+      setAuthError(loginMessage(err));
     } finally {
       setSigningIn(false);
     }
