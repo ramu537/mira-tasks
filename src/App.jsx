@@ -4,6 +4,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { configureAccessTokenProvider } from "./api/client";
 import AppShell from "./components/AppShell";
 import DomainIntelligenceDialog from "./components/DomainIntelligenceDialog";
+import AiTaskCaptureModal from "./components/AiTaskCaptureModal";
+import AiMemorySearchDialog from "./components/AiMemorySearchDialog";
 import LoginScreen from "./components/LoginScreen";
 import { ErrorState, LoadingState } from "./components/PageState";
 import TaskDialog from "./components/TaskDialog";
@@ -69,7 +71,20 @@ export default function App() {
   const [deletingId, setDeletingId] = useState(null);
   const [toast, setToast] = useState(null);
   const [intelligenceOpen, setIntelligenceOpen] = useState(false);
+  const [aiCaptureOpen, setAiCaptureOpen] = useState(false);
+  const [aiSearchOpen, setAiSearchOpen] = useState(false);
   const closeToast = useCallback(() => setToast(null), []);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setAiSearchOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   function openCreate() { setEditingTask(null); setDialogOpen(true); }
   function openEdit(task) { setEditingTask(task); setDialogOpen(true); }
@@ -127,11 +142,31 @@ export default function App() {
 
   return (
     <>
-      <AppShell user={user} onSignOut={handleSignOut} loading={manager.loading} onAdd={openCreate} onOpenIntelligence={() => setIntelligenceOpen(true)}>
+      <AppShell
+        user={user}
+        onSignOut={handleSignOut}
+        loading={manager.loading}
+        onAdd={openCreate}
+        onOpenIntelligence={() => setIntelligenceOpen(true)}
+        onOpenAiCapture={() => setAiCaptureOpen(true)}
+        onOpenAiSearch={() => setAiSearchOpen(true)}
+      >
         {content}
       </AppShell>
       <DomainIntelligenceDialog open={intelligenceOpen} title="Task intelligence" description="See workload pressure, overdue risk and the most useful next move—without changing your task list." date={manager.today} load={taskApi.analyze} refresh={taskApi.refreshAnalysis} onClose={() => setIntelligenceOpen(false)} />
       <TaskDialog open={dialogOpen} task={editingTask} tasks={manager.tasks} today={manager.today} busy={saving} onClose={closeDialog} onSave={saveTask} />
+      <AiTaskCaptureModal
+        open={aiCaptureOpen}
+        onClose={() => setAiCaptureOpen(false)}
+        onSuccess={(msg) => {
+          manager.retry();
+          setToast({ tone: "success", message: msg });
+        }}
+      />
+      <AiMemorySearchDialog
+        open={aiSearchOpen}
+        onClose={() => setAiSearchOpen(false)}
+      />
       <Toast toast={toast} onClose={closeToast} />
     </>
   );
