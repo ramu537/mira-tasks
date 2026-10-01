@@ -3,12 +3,14 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { configureAccessTokenProvider } from "./api/client";
 import AppShell from "./components/AppShell";
+import DomainIntelligenceDialog from "./components/DomainIntelligenceDialog";
 import LoginScreen from "./components/LoginScreen";
 import { ErrorState, LoadingState } from "./components/PageState";
 import TaskDialog from "./components/TaskDialog";
 import Toast from "./components/Toast";
 import { auth, googleProvider, signInWithPopup, signOut } from "./config/firebase";
 import { useTaskManager } from "./hooks/useTaskManager";
+import { taskApi } from "./api/tasks";
 import AllTasksPage from "./pages/AllTasksPage";
 import FocusPage from "./pages/FocusPage";
 import MatrixPage from "./pages/MatrixPage";
@@ -66,6 +68,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [intelligenceOpen, setIntelligenceOpen] = useState(false);
   const closeToast = useCallback(() => setToast(null), []);
 
   function openCreate() { setEditingTask(null); setDialogOpen(true); }
@@ -124,12 +127,12 @@ export default function App() {
 
   return (
     <>
-      <AppShell user={user} onSignOut={handleSignOut} loading={manager.loading} onAdd={openCreate}>
+      <AppShell user={user} onSignOut={handleSignOut} loading={manager.loading} onAdd={openCreate} onOpenIntelligence={() => setIntelligenceOpen(true)}>
         {content}
       </AppShell>
+      <DomainIntelligenceDialog open={intelligenceOpen} title="Task intelligence" description="See workload pressure, overdue risk and the most useful next move—without changing your task list." date={manager.today} load={taskApi.analyze} refresh={taskApi.refreshAnalysis} onClose={() => setIntelligenceOpen(false)} />
       <TaskDialog open={dialogOpen} task={editingTask} tasks={manager.tasks} today={manager.today} busy={saving} onClose={closeDialog} onSave={saveTask} />
       <Toast toast={toast} onClose={closeToast} />
     </>
   );
 }
-

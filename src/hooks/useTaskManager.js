@@ -45,6 +45,17 @@ export function useTaskManager(user = null) {
     return () => { requestSequence.current += 1; };
   }, [user, load]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+    const sync = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [user, load]);
+
   const actions = useMemo(() => ({
     async saveTask(payload, editingId = null) {
       const saved = editingId
@@ -85,4 +96,3 @@ export function useTaskManager(user = null) {
 
   return { today, tasks, togglingIds, loading, ready, loadError, retry: load, actions };
 }
-

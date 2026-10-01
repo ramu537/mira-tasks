@@ -1,6 +1,15 @@
 import { apiRequest } from "./client.js";
 
 export const taskApi = {
+  analyze(date) {
+    return apiRequest(`/tasks/analysis?${new URLSearchParams({ date })}`);
+  },
+  refreshAnalysis(date) {
+    return apiRequest("/tasks/analysis/refresh", {
+      method: "POST",
+      body: JSON.stringify({ date }),
+    });
+  },
   list() {
     return apiRequest("/tasks");
   },
@@ -20,4 +29,3 @@ export const taskApi = {
     return apiRequest(`/tasks/${encodeURIComponent(id)}`, { method: "DELETE" });
   },
 };
-
