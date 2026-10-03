@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { configureAccessTokenProvider } from "./api/client";
 import AppShell from "./components/AppShell";
@@ -26,6 +26,7 @@ function loginMessage(error) {
 }
 
 export default function App() {
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
@@ -126,6 +127,12 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get("task");
+    const target = manager.tasks.find(task => String(task.id) === id);
+    if (target && manager.ready) { setEditingTask(target); setDialogOpen(true); }
+  }, [location.search, manager.ready]);
+
   if (authLoading) {
     return <LoadingState />;
   }
@@ -153,7 +160,7 @@ export default function App() {
       >
         {content}
       </AppShell>
-      <DomainIntelligenceDialog open={intelligenceOpen} title="Task intelligence" description="See workload pressure, overdue risk and the most useful next move—without changing your task list." date={manager.today} load={taskApi.analyze} refresh={taskApi.refreshAnalysis} onClose={() => setIntelligenceOpen(false)} />
+      <DomainIntelligenceDialog revision={manager.tasks} open={intelligenceOpen} title="Task intelligence" description="See workload pressure, overdue risk and the most useful next move—without changing your task list." date={manager.today} load={taskApi.analyze} refresh={taskApi.refreshAnalysis} onClose={() => setIntelligenceOpen(false)} />
       <TaskDialog open={dialogOpen} task={editingTask} tasks={manager.tasks} today={manager.today} busy={saving} onClose={closeDialog} onSave={saveTask} />
       <AiTaskCaptureModal
         open={aiCaptureOpen}

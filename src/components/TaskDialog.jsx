@@ -2,15 +2,15 @@ import { Check, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { defaultLists, priorities, priorityLabel, uniqueLists } from "../lib/tasks";
 
-const blankTask = (today) => ({
+const blankTask = () => ({
   title: "",
   notes: "",
   taskList: "Personal",
-  priority: "MEDIUM",
-  dueOn: today,
+  priority: "NONE",
+  dueOn: "",
   focusOn: "",
   urgent: false,
-  important: true,
+  important: false,
 });
 
 export default function TaskDialog({ open, task, tasks, today, busy, onClose, onSave }) {

@@ -47,13 +47,13 @@ export function focusGroups(tasks, today) {
       id: "overdue",
       label: "Overdue",
       description: "Decide, reschedule, or finish",
-      tasks: sortTasks(open.filter((task) => task.dueOn && task.dueOn < today)),
+      tasks: sortTasks(open.filter((task) => task.dueOn && task.dueOn < today), today),
     },
     {
       id: "today",
       label: "Today",
       description: "Your deliberate focus",
-      tasks: sortTasks(open.filter((task) => (task.dueOn === today || task.focusOn === today) && !(task.dueOn && task.dueOn < today))),
+      tasks: sortTasks(open.filter((task) => (task.dueOn === today || task.focusOn === today) && !(task.dueOn && task.dueOn < today)), today),
     },
     {
       id: "upcoming",
@@ -107,10 +107,21 @@ export function uniqueLists(tasks) {
   return Array.from(new Set([...defaultLists, ...tasks.map((task) => task.taskList).filter(Boolean)]));
 }
 
-export function sortTasks(tasks) {
+export function taskDecisionScore(task, today) {
+  return (task.dueOn && task.dueOn <= today ? 100 : 0)
+    + (task.urgent ? 30 : 0) + (task.important ? 20 : 0)
+    + (task.focusOn === today ? 40 : 0)
+    + ({ HIGH: 12, MEDIUM: 8, LOW: 4, NONE: 0 }[task.priority] || 0);
+}
+
+export function sortTasks(tasks, today = null) {
   const priorityRank = { HIGH: 0, MEDIUM: 1, LOW: 2, NONE: 3 };
   return [...tasks].sort((left, right) => {
     if (left.completed !== right.completed) return Number(left.completed) - Number(right.completed);
+    if (today) {
+      const scoreOrder = taskDecisionScore(right, today) - taskDecisionScore(left, today);
+      if (scoreOrder) return scoreOrder;
+    }
     const dateOrder = (left.dueOn || "9999-12-31").localeCompare(right.dueOn || "9999-12-31");
     return dateOrder || priorityRank[left.priority] - priorityRank[right.priority] || left.title.localeCompare(right.title);
   });
