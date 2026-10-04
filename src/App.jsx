@@ -88,7 +88,8 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  function openCreate() { setEditingTask(null); setDialogOpen(true); }
+  function openManualCreate() { setEditingTask(null); setDialogOpen(true); }
+  function openCreate() { setAiCaptureOpen(true); }
   function openEdit(task) { setEditingTask(task); setDialogOpen(true); }
   function closeDialog() { if (!saving) { setDialogOpen(false); setEditingTask(null); } }
 
@@ -154,7 +155,7 @@ export default function App() {
         user={user}
         onSignOut={handleSignOut}
         loading={manager.loading}
-        onAdd={openCreate}
+        onAdd={openManualCreate}
         onOpenIntelligence={() => setIntelligenceOpen(true)}
         onOpenAiCapture={() => setAiCaptureOpen(true)}
         onOpenAiSearch={() => setAiSearchOpen(true)}
@@ -164,6 +165,8 @@ export default function App() {
       <DomainIntelligenceDialog domain="tasks" userId={user.uid} revision={manager.tasks} open={intelligenceOpen} title="Task intelligence" description="See workload pressure, overdue risk and the most useful next move—without changing your task list." date={manager.today} load={taskApi.analyze} refresh={taskApi.refreshAnalysis} onClose={() => setIntelligenceOpen(false)} />
       <TaskDialog open={dialogOpen} task={editingTask} tasks={manager.tasks} today={manager.today} busy={saving} onClose={closeDialog} onSave={saveTask} />
       <AiTaskCaptureModal
+        onManual={() => { setAiCaptureOpen(false); openManualCreate(); }}
+        key={user.uid}
         open={aiCaptureOpen}
         onClose={() => setAiCaptureOpen(false)}
         onSuccess={(msg) => {

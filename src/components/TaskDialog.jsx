@@ -49,7 +49,7 @@ export default function TaskDialog({ open, task, tasks, today, busy, onClose, on
   async function submit(event) {
     event.preventDefault();
     setAttempted(true);
-    if (!valid) return;
+    if (!valid || busy) return;
     await onSave({
       ...form,
       title: form.title.trim(),
@@ -62,10 +62,11 @@ export default function TaskDialog({ open, task, tasks, today, busy, onClose, on
 
   return (
     <dialog ref={ref} className="dialog task-dialog" onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onClick={(event) => { if (event.target === ref.current && !busy) onClose(); }}>
-      <form className="dialog-card task-form" onSubmit={submit} noValidate>
+      <form className="dialog-card task-form" onSubmit={submit} noValidate onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") { event.preventDefault(); event.currentTarget.requestSubmit(); } }}>
         <header className="dialog-header"><div><span className="eyebrow">{task ? "Clarify the commitment" : "Turn intention into action"}</span><h2>{task ? "Edit task" : "Create a task"}</h2><p>Capture the next concrete step, then decide when it deserves attention.</p></div><button className="icon-button" type="button" onClick={onClose} disabled={busy} aria-label="Close task form"><X size={20} /></button></header>
         <div className="form-body">
           <label className="field"><span>What needs doing?</span><input autoFocus required maxLength="140" placeholder="Send the project proposal" value={form.title} onChange={(event) => update("title", event.target.value)} aria-invalid={attempted && !titleValid} />{attempted && !titleValid && <small className="field-error">Enter a clear task title of 140 characters or fewer.</small>}</label>
+          <details className="entry-options" open={Boolean(task)}><summary>Notes, dates and priority · optional</summary>
           <label className="field"><span>Notes <small>Optional</small></span><textarea rows="3" maxLength="500" placeholder="Add the next useful detail" value={form.notes} onChange={(event) => update("notes", event.target.value)} /></label>
           <div className="form-grid">
             <label className="field"><span>List</span><select value={form.taskList} onChange={(event) => update("taskList", event.target.value)}>{lists.map((list) => <option key={list} value={list}>{list}</option>)}</select></label>
@@ -79,6 +80,7 @@ export default function TaskDialog({ open, task, tasks, today, busy, onClose, on
             <button type="button" className={form.urgent ? "decision-choice is-urgent" : "decision-choice"} aria-pressed={form.urgent} onClick={() => update("urgent", !form.urgent)}><span><strong>Urgent</strong><small>Needs attention soon</small></span>{form.urgent && <Check size={17} />}</button>
             <button type="button" className={form.important ? "decision-choice is-important" : "decision-choice"} aria-pressed={form.important} onClick={() => update("important", !form.important)}><span><strong>Important</strong><small>Creates meaningful impact</small></span>{form.important && <Check size={17} />}</button>
           </div></fieldset>
+          </details>
         </div>
         <footer className="dialog-actions form-actions"><button className="button button--ghost" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="button button--primary" type="submit" disabled={busy}>{busy ? "Saving…" : task ? "Save changes" : "Create task"}</button></footer>
       </form>
