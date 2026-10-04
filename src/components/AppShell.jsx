@@ -30,7 +30,7 @@ function Navigation({ mobile = false }) {
   );
 }
 
-export default function AppShell({ user, onSignOut, loading, onAdd, onOpenIntelligence, onOpenAiCapture, onOpenAiSearch, children }) {
+export default function AppShell({ user, onSignOut, loading, onOpenIntelligence, onOpenAiCapture, onOpenAiSearch, children }) {
   return (
     <div className="app-frame">
       <aside className="sidebar">
@@ -77,9 +77,6 @@ export default function AppShell({ user, onSignOut, loading, onAdd, onOpenIntell
             <ThemeControl />
             <button className="icon-button" type="button" onClick={onOpenAiSearch} aria-label="Search memory" title="AI Vector Memory Search (Ctrl+K)"><Search size={18} /></button>
             <button className="icon-button topbar-intelligence" type="button" onClick={onOpenIntelligence} aria-label="Open task intelligence" title="Task intelligence"><Sparkles size={18} /></button>
-            <button className="button button--ghost topbar-capture" type="button" onClick={onAdd} aria-label="Enter task manually" title="Manual entry — optional">
-              <Plus size={16} /> <span>Manual entry</span>
-            </button>
             <button className="button button--primary topbar-add" type="button" onClick={onOpenAiCapture}>
               <Plus size={18} strokeWidth={2.4} /> New task
             </button>
@@ -108,9 +105,6 @@ export default function AppShell({ user, onSignOut, loading, onAdd, onOpenIntell
         <main className="main-content">{children}</main>
         <Navigation mobile />
         <div className="mobile-only-actions">
-          <button className="mobile-add mobile-capture" type="button" onClick={onAdd} aria-label="Enter task manually">
-            <Sparkles size={22} strokeWidth={2.2} />
-          </button>
           <button className="mobile-add" type="button" onClick={onOpenAiCapture} aria-label="Create task with text or photo"><Plus size={24} /></button>
         </div>
       </div>

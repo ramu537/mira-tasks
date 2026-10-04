@@ -13,10 +13,13 @@ const blankTask = () => ({
   important: false,
 });
 
-export default function TaskDialog({ open, task, tasks, today, busy, onClose, onSave }) {
+export default function TaskDialog({ open, task, tasks, today, busy, error, onClose, onSave }) {
   const ref = useRef(null);
   const [form, setForm] = useState(blankTask(today));
   const [attempted, setAttempted] = useState(false);
+  useEffect(() => {
+    if (open && error) ref.current?.querySelector(".integration-error")?.scrollIntoView({ block: "nearest" });
+  }, [open, error]);
 
   useEffect(() => {
     if (!open) return;
@@ -61,10 +64,11 @@ export default function TaskDialog({ open, task, tasks, today, busy, onClose, on
   }
 
   return (
-    <dialog ref={ref} className="dialog task-dialog" onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onClick={(event) => { if (event.target === ref.current && !busy) onClose(); }}>
+    <dialog ref={ref} className="dialog task-dialog" aria-labelledby="task-form-title" onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onClick={(event) => { if (event.target === ref.current && !busy) onClose(); }}>
       <form className="dialog-card task-form" onSubmit={submit} noValidate onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") { event.preventDefault(); event.currentTarget.requestSubmit(); } }}>
-        <header className="dialog-header"><div><span className="eyebrow">{task ? "Clarify the commitment" : "Turn intention into action"}</span><h2>{task ? "Edit task" : "Create a task"}</h2><p>Capture the next concrete step, then decide when it deserves attention.</p></div><button className="icon-button" type="button" onClick={onClose} disabled={busy} aria-label="Close task form"><X size={20} /></button></header>
+        <header className="dialog-header"><div><span className="eyebrow">{task ? "Clarify the commitment" : "Turn intention into action"}</span><h2 id="task-form-title">{task ? "Edit task" : "Create a task"}</h2><p>Capture the next concrete step, then decide when it deserves attention.</p></div><button className="icon-button" type="button" onClick={onClose} disabled={busy} aria-label="Close task form"><X size={20} /></button></header>
         <div className="form-body">
+          {error && <p className="integration-error" role="alert">{error}</p>}
           <label className="field"><span>What needs doing?</span><input autoFocus required maxLength="140" placeholder="Send the project proposal" value={form.title} onChange={(event) => update("title", event.target.value)} aria-invalid={attempted && !titleValid} />{attempted && !titleValid && <small className="field-error">Enter a clear task title of 140 characters or fewer.</small>}</label>
           <details className="entry-options" open={Boolean(task)}><summary>Notes, dates and priority · optional</summary>
           <label className="field"><span>Notes <small>Optional</small></span><textarea rows="3" maxLength="500" placeholder="Add the next useful detail" value={form.notes} onChange={(event) => update("notes", event.target.value)} /></label>

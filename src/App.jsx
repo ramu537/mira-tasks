@@ -70,8 +70,11 @@ export default function App() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+  useEffect(() => { setDeleteError(null); }, [user?.uid]);
   const [intelligenceOpen, setIntelligenceOpen] = useState(false);
   const [aiCaptureOpen, setAiCaptureOpen] = useState(false);
   const [aiSearchOpen, setAiSearchOpen] = useState(false);
@@ -88,12 +91,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  function openManualCreate() { setEditingTask(null); setDialogOpen(true); }
+  function openManualCreate() { setSaveError(""); setEditingTask(null); setDialogOpen(true); }
   function openCreate() { setAiCaptureOpen(true); }
-  function openEdit(task) { setEditingTask(task); setDialogOpen(true); }
+  function openEdit(task) { setSaveError(""); setEditingTask(task); setDialogOpen(true); }
   function closeDialog() { if (!saving) { setDialogOpen(false); setEditingTask(null); } }
 
   async function saveTask(payload) {
+    setSaveError("");
     setSaving(true);
     try {
       await manager.actions.saveTask(payload, editingTask?.id);
@@ -101,6 +105,7 @@ export default function App() {
       setEditingTask(null);
       setToast({ tone: "success", message: editingTask ? "Task updated." : "Task created." });
     } catch (error) {
+      setSaveError(error.message || "Could not save. Your input is kept.");
       setToast({ tone: "error", message: error.message });
     } finally {
       setSaving(false);
@@ -116,12 +121,14 @@ export default function App() {
   }
 
   async function deleteTask(id) {
+    setDeleteError(null);
     setDeletingId(id);
     try {
       await manager.actions.deleteTask(id);
       setToast({ tone: "success", message: "Task deleted." });
       return true;
     } catch (error) {
+      setDeleteError({ id, message: error.message || "Could not delete. Your record is kept." });
       setToast({ tone: "error", message: error.message });
       return false;
     } finally {
@@ -132,7 +139,7 @@ export default function App() {
   useEffect(() => {
     const id = new URLSearchParams(location.search).get("task");
     const target = manager.tasks.find(task => String(task.id) === id);
-    if (target && manager.ready) { setEditingTask(target); setDialogOpen(true); }
+    if (target && manager.ready) { setSaveError(""); setEditingTask(target); setDialogOpen(true); }
   }, [location.search, manager.ready]);
 
   if (authLoading) {
@@ -143,7 +150,7 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} error={authError} loading={signingIn} />;
   }
 
-  const pageProps = { tasks: manager.tasks, today: manager.today, togglingIds: manager.togglingIds, deletingId, onAdd: openCreate, onToggle: toggleTask, onEdit: openEdit, onDelete: deleteTask };
+  const pageProps = { tasks: manager.tasks, today: manager.today, togglingIds: manager.togglingIds, deletingId, deleteError, onAdd: openCreate, onToggle: toggleTask, onEdit: openEdit, onDelete: deleteTask };
   let content;
   if (!manager.ready && manager.loading) content = <LoadingState />;
   else if (!manager.ready && manager.loadError) content = <ErrorState message={manager.loadError} onRetry={manager.retry} />;
@@ -163,7 +170,7 @@ export default function App() {
         {content}
       </AppShell>
       <DomainIntelligenceDialog domain="tasks" userId={user.uid} revision={manager.tasks} open={intelligenceOpen} title="Task intelligence" description="See workload pressure, overdue risk and the most useful next move—without changing your task list." date={manager.today} load={taskApi.analyze} refresh={taskApi.refreshAnalysis} onClose={() => setIntelligenceOpen(false)} />
-      <TaskDialog open={dialogOpen} task={editingTask} tasks={manager.tasks} today={manager.today} busy={saving} onClose={closeDialog} onSave={saveTask} />
+      <TaskDialog open={dialogOpen} task={editingTask} tasks={manager.tasks} today={manager.today} busy={saving} error={saveError} onClose={closeDialog} onSave={saveTask} />
       <AiTaskCaptureModal
         onManual={() => { setAiCaptureOpen(false); openManualCreate(); }}
         key={user.uid}

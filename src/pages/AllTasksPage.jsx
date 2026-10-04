@@ -12,7 +12,7 @@ const baseFilters = [
   { value: "DONE", label: "Completed" },
 ];
 
-export default function AllTasksPage({ tasks, today, togglingIds, deletingId, onAdd, onToggle, onEdit, onDelete }) {
+export default function AllTasksPage({ tasks, today, togglingIds, deletingId, deleteError, onAdd, onToggle, onEdit, onDelete }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("OPEN");
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -32,17 +32,17 @@ export default function AllTasksPage({ tasks, today, togglingIds, deletingId, on
         <div className="filter-scroll"><span className="filter-label"><SlidersHorizontal size={15} /> View</span>{[...baseFilters, ...lists.map((list) => ({ value: `LIST:${list}`, label: list }))].map((item) => <button key={item.value} className={filter === item.value ? "filter-chip is-active" : "filter-chip"} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value)}>{item.value.startsWith("LIST:") && <i style={{ "--list-color": listToken(item.label) }} />}{item.label}</button>)}</div>
       </section>
 
-      {lists.length > 0 && <section className="list-progress" aria-label="List progress">{lists.map((list) => {
+      {lists.length > 0 && <details className="task-list-progress"><summary>List progress · optional</summary><section className="list-progress" aria-label="List progress">{lists.map((list) => {
         const listTasks = tasks.filter((task) => task.taskList === list);
         const completed = listTasks.filter((task) => task.completed).length;
         const percent = Math.round((completed / listTasks.length) * 100);
         return <article key={list} style={{ "--list-color": listToken(list), "--list-progress": `${percent}%` }}><header><span><i />{list}</span><strong>{completed}/{listTasks.length}</strong></header><div><i /></div></article>;
-      })}</section>}
+      })}</section></details>}
 
       <section className="panel task-table-card">
         {visible.length ? <div className="task-table"><header><span>Task</span><span>List</span><span>Priority</span><span>Due</span><span className="sr-only">Actions</span></header><div>{visible.map((task) => <TaskRow key={task.id} task={task} today={today} toggling={togglingIds.has(task.id)} onToggle={onToggle} onEdit={onEdit} onDelete={setPendingDelete} />)}</div></div> : <EmptyState kind={search ? "search" : "clear"} title={search ? "No matching tasks" : filter === "OPEN" ? "Everything is complete" : "Nothing in this view"} description={search ? "Try another search or remove a filter." : "Create a task or choose another filter."} actionLabel="New task" onAction={onAdd} />}
       </section>
-      <ConfirmDialog open={Boolean(pendingDelete)} task={pendingDelete} busy={deletingId === pendingDelete?.id} onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />
+      <ConfirmDialog error={deleteError && deleteError.id === pendingDelete?.id ? deleteError.message : ""} open={Boolean(pendingDelete)} task={pendingDelete} busy={deletingId === pendingDelete?.id} onCancel={() => setPendingDelete(null)} onConfirm={confirmDelete} />
     </div>
   );
 }

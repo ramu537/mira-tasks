@@ -4,7 +4,7 @@ import { dueMeta, listToken, priorityLabel } from "../lib/tasks";
 
 export default function TaskRow({ task, today, toggling, compact = false, onToggle, onEdit, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useRef(null), trigger = useRef(null);
   const due = dueMeta(task, today);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function TaskRow({ task, today, toggling, compact = false, onTogg
       <span className="task-list"><i />{task.taskList}</span>
       <span className={`priority priority--${task.priority.toLowerCase()}`}><Flag size={13} />{priorityLabel(task.priority)}</span>
       <span className={`task-due task-due--${due.tone}`}>{due.label}</span>
-      <div className="row-menu" ref={menuRef}><button className="icon-button" type="button" aria-label={`Actions for ${task.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)}><MoreHorizontal size={19} /></button>{menuOpen && <div className="row-menu__popover"><button type="button" onClick={() => { setMenuOpen(false); onEdit(task); }}><Pencil size={16} /> Edit</button><button className="danger-action" type="button" onClick={() => { setMenuOpen(false); onDelete(task); }}><Trash2 size={16} /> Delete</button></div>}</div>
+      <div className="row-menu" ref={menuRef} onKeyDown={event => { if (event.key === "Escape" && menuOpen) { event.preventDefault(); event.stopPropagation(); setMenuOpen(false); trigger.current?.focus(); } }}><button ref={trigger} className="icon-button" type="button" aria-label={`Actions for ${task.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)}><MoreHorizontal size={19} /></button>{menuOpen && <div className="row-menu__popover"><button type="button" onClick={() => { trigger.current?.focus(); setMenuOpen(false); onEdit(task); }}><Pencil size={16} /> Edit</button><button className="danger-action" type="button" onClick={() => { trigger.current?.focus(); setMenuOpen(false); onDelete(task); }}><Trash2 size={16} /> Delete</button></div>}</div>
     </article>
   );
 }
